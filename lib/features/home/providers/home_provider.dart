@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:movie_explorer/domain/entities/base_paginated_response_entity.dart';
 import 'package:movie_explorer/domain/entities/movie_entity.dart';
 import 'package:movie_explorer/domain/interfaces/movie_data_impl.dart';
 import 'package:movie_explorer/features/home/providers/favorite_manager.dart';
+import 'package:movie_explorer/features/home/screens/movie_details_screen.dart';
 
 class HomeProvider with ChangeNotifier {
   final MovieRemoteDataSourceImpl repo = MovieRemoteDataSourceImpl();
   final FavoriteManager favManager;
+  final TextEditingController searchController;
+
   ScrollController scrollController;
 
   List<MovieEntity> _movies;
@@ -19,7 +23,8 @@ class HomeProvider with ChangeNotifier {
         _movies = [],
         _isLoading = false,
         _currentPage = 1,
-        _isFetchingMore = false {
+        _isFetchingMore = false,
+        searchController = TextEditingController() {
     _initData();
   }
 
@@ -31,7 +36,7 @@ class HomeProvider with ChangeNotifier {
   Future<void> _initData() async {
     scrollController.addListener(_onScroll);
     await loadFav();
-    await loadMovies(_currentPage);
+    _movies = await loadMovies(_currentPage);
   }
 
   Future<void> loadFav() async {
@@ -39,21 +44,15 @@ class HomeProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> loadMovies(int page) async {
+  Future<List<MovieEntity>> loadMovies(int page) async {
     _isLoading = true;
     notifyListeners();
-
-    try {
-      final paginated = await repo.fetchMovies(page);
-      final list = paginated.results?.whereType<MovieEntity>().toList() ?? [];
-      _movies = list;
-    } catch (e) {
-      //TODO: error here
-      print(e);
-    }
+    final BasePaginatedResponseEntity<MovieEntity>? paginated =
+        await repo.fetchMovies(page);
 
     _isLoading = false;
     notifyListeners();
+    return paginated?.results?.whereType<MovieEntity>().toList() ?? [];
   }
 
   Future<void> loadMoreMovies() async {
@@ -63,8 +62,13 @@ class HomeProvider with ChangeNotifier {
     _currentPage++;
 
     try {
-      final res = await repo.fetchMovies(_currentPage);
-      final newMovies = res.results?.whereType<MovieEntity>().toList() ?? [];
+      final newMovies = searchController.text.isEmpty
+          ? await loadMovies(_currentPage)
+          : (await repo.searchMovies(searchController.text, page: _currentPage))
+                  ?.results
+                  ?.whereType<MovieEntity>()
+                  .toList() ??
+              [];
       _movies.addAll(newMovies);
     } catch (e) {
       //TODO: error here
@@ -87,9 +91,46 @@ class HomeProvider with ChangeNotifier {
     }
   }
 
+  void toDetailScreen(BuildContext context, MovieEntity movie) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MovieDetailsScreen(movie: movie),
+      ),
+    );
+  }
+
+  Future<void> searchMoviesByQuery(String query) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      if (query.isEmpty) {
+        clearSearch();
+        return;
+      }
+      final searchedMovies = await repo.searchMovies(query, page: _currentPage);
+      _movies =
+          searchedMovies?.results?.whereType<MovieEntity>().toList() ?? [];
+    } catch (e) {
+      //TODO
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  void clearSearch() async {
+    searchController.clear();
+    _currentPage = 1;
+    _movies = await loadMovies(_currentPage);
+    notifyListeners();
+  }
+
   @override
   void dispose() {
     scrollController.dispose();
+    searchController.dispose();
     super.dispose();
   }
 }

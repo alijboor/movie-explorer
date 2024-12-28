@@ -20,9 +20,10 @@ class FavoriteManager {
   Future<void> loadFavorites() async {
     final prefs = await SharedPreferences.getInstance();
     final favorites = prefs.getStringList(StorageKeys.favMovies) ?? [];
-    _favoriteMovies = favorites
-        .map((movie) => MovieEntity.fromJson(json.decode(movie)))
-        .toList();
+    _favoriteMovies = favorites.map((movie) {
+      var item = json.decode(movie);
+      return MovieEntity.fromJson(item);
+    }).toList();
   }
 
   Future<void> toggleFavorite(MovieEntity movie) async {
@@ -33,7 +34,6 @@ class FavoriteManager {
     } else {
       _favoriteMovies.add(movie);
     }
-    await prefs.clear();
     final favoriteStrings =
         _favoriteMovies.map((movie) => json.encode(movie.toJson())).toList();
     prefs.setStringList(StorageKeys.favMovies, favoriteStrings);

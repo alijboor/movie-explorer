@@ -12,24 +12,23 @@ class MovieRemoteDataSourceImpl implements MovieInterface {
   MovieRemoteDataSourceImpl() : client = http.Client();
 
   @override
-  Future<BasePaginatedResponseEntity<MovieEntity>> fetchMovies(int page) async {
+  Future<BasePaginatedResponseEntity<MovieEntity>?> fetchMovies(
+      int page) async {
     final response =
         await client.get(Uri.parse('${ApiRoutes.moviePopular}&page=$page'));
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      print(data);
       return BasePaginatedResponseEntity<MovieEntity>.fromJson(
         data,
         (movie) => MovieEntity.fromJson(movie),
       );
-    } else {
-      print(response);
-      throw Exception();
     }
+
+    throw Exception();
   }
 
   @override
-  Future<BasePaginatedResponseEntity<MovieEntity>> searchMovies(String query,
+  Future<BasePaginatedResponseEntity<MovieEntity>?> searchMovies(String query,
       {int? page}) async {
     final response = await client
         .get(Uri.parse('${ApiRoutes.movieSearch}&query=$query&page=$page'));
@@ -39,8 +38,8 @@ class MovieRemoteDataSourceImpl implements MovieInterface {
         data,
         (movie) => MovieEntity.fromJson(movie),
       );
-    } else {
-      throw Exception();
     }
+
+    throw Exception();
   }
 }
