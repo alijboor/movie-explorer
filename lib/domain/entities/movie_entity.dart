@@ -18,11 +18,11 @@ class MovieEntity {
   factory MovieEntity.fromJson(Map<String, dynamic> json) {
     return MovieEntity(
       id: json['id'],
-      title: json['title'],
-      overview: json['overview'],
-      posterPath: json['poster_path'],
-      releaseDate: json['release_date'],
-      rating: json['vote_average'].toDouble(),
+      title: json['title'] ?? '',
+      overview: json['overview'] ?? '',
+      posterPath: json['poster_path'] ?? '',
+      releaseDate: json['release_date'] ?? '',
+      rating: (json['vote_average'] ?? 0.0).toDouble(),
     );
   }
 
@@ -32,6 +32,6 @@ class MovieEntity {
         'overview': overview,
         'posterPath': posterPath,
         'releaseDate': releaseDate,
-        'rating': rating,
+        'rating': rating.toString(),
       };
 }
