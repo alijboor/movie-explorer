@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:movie_explorer/core/constants/api_routes.dart';
 import 'package:movie_explorer/core/constants/lang_keys.dart';
 
 class PosterImage extends StatelessWidget {
@@ -10,7 +11,7 @@ class PosterImage extends StatelessWidget {
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(15),
-      child: Image.network("https://image.tmdb.org/t/p/w400$posterImagePath",
+      child: Image.network("${ApiRoutes.imageRoute}$posterImagePath",
           errorBuilder: (context, exception, stackTrace) {
         return Column(
           children: [

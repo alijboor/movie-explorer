@@ -5,6 +5,8 @@ import 'package:movie_explorer/features/home/widgets/poster_image.dart';
 import 'package:movie_explorer/features/home/widgets/rating_icon.dart';
 import 'package:provider/provider.dart';
 
+import 'rating_favorite_action_row.dart';
+
 class MoviesGridBuilder extends StatelessWidget {
   const MoviesGridBuilder({required this.movies, super.key})
       : _withLoadMore = true;
@@ -32,39 +34,27 @@ class MoviesGridBuilder extends StatelessWidget {
               return const Center(child: CircularProgressIndicator());
             }
             final movie = movies[index];
-            return Container(
-              margin: const EdgeInsets.all(8.0),
-              decoration: BoxDecoration(
-                  color: Colors.white, borderRadius: BorderRadius.circular(15)),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  PosterImage(posterImagePath: movie.posterPath),
-                  const SizedBox(height: 5.0),
-                  Text(movie.title,
-                      maxLines: 1, overflow: TextOverflow.ellipsis),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          RatingIcon(
-                              iconColor: Colors.yellowAccent,
-                              rating: movie.rating),
-                          Text(movie.rating.toStringAsFixed(1))
-                        ],
-                      ),
-                      IconButton(
-                        icon: Icon(homeProvider.favManager.isFavorite(movie)
-                            ? Icons.favorite
-                            : Icons.favorite_border),
-                        color: Colors.red,
-                        onPressed: () =>
-                            homeProvider.toggleFavState(movie),
-                      ),
-                    ],
-                  ),
-                ],
+            return InkWell(
+              onTap: () => homeProvider.toDetailScreen(context, movie),
+              child: Container(
+                margin: const EdgeInsets.all(8.0),
+                decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(15)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    PosterImage(posterImagePath: movie.posterPath),
+                    const SizedBox(height: 5.0),
+                    Text(movie.title,
+                        maxLines: 1, overflow: TextOverflow.ellipsis),
+                    RatingFavoriteActionRow(
+                      movie: movie,
+                      isFav: homeProvider.favManager.isFavorite,
+                      toggleFav: homeProvider.toggleFavState,
+                    )
+                  ],
+                ),
               ),
             );
           });
