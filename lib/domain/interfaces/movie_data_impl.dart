@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:movie_explorer/core/constants/api_routes.dart';
+import 'package:movie_explorer/core/services/dialog_service.dart';
 import 'package:movie_explorer/domain/entities/base_paginated_response_entity.dart';
 
 import 'package:movie_explorer/domain/entities/movie_entity.dart';
@@ -23,8 +24,8 @@ class MovieRemoteDataSourceImpl implements MovieInterface {
         (movie) => MovieEntity.fromJson(movie),
       );
     }
-
-    throw Exception();
+    DialogService().showErrorDialog(response.reasonPhrase ?? '');
+    return null;
   }
 
   @override
@@ -39,7 +40,7 @@ class MovieRemoteDataSourceImpl implements MovieInterface {
         (movie) => MovieEntity.fromJson(movie),
       );
     }
-
-    throw Exception();
+    DialogService().showErrorDialog(response.reasonPhrase ?? '');
+    return null;
   }
 }

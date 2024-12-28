@@ -17,6 +17,8 @@ class HomeProvider with ChangeNotifier {
   int _currentPage;
   bool _isFetchingMore;
 
+  BasePaginatedResponseEntity<MovieEntity>? paginated;
+
   HomeProvider()
       : scrollController = ScrollController(),
         favManager = FavoriteManager(),
@@ -47,8 +49,7 @@ class HomeProvider with ChangeNotifier {
   Future<List<MovieEntity>> loadMovies(int page) async {
     _isLoading = true;
     notifyListeners();
-    final BasePaginatedResponseEntity<MovieEntity>? paginated =
-        await repo.fetchMovies(page);
+    paginated = await repo.fetchMovies(page);
 
     _isLoading = false;
     notifyListeners();
@@ -56,26 +57,28 @@ class HomeProvider with ChangeNotifier {
   }
 
   Future<void> loadMoreMovies() async {
+    if (paginated != null && paginated?.totalPages != null) {
+      if (_currentPage >= paginated!.totalPages!) return;
+    }
     if (_isFetchingMore) return;
 
     _isFetchingMore = true;
     _currentPage++;
 
-    try {
-      final newMovies = searchController.text.isEmpty
-          ? await loadMovies(_currentPage)
-          : (await repo.searchMovies(searchController.text, page: _currentPage))
-                  ?.results
-                  ?.whereType<MovieEntity>()
-                  .toList() ??
-              [];
-      _movies.addAll(newMovies);
-    } catch (e) {
-      //TODO: error here
-    }
+    final newMovies = searchController.text.isEmpty
+        ? await loadMovies(_currentPage)
+        : await loadMoreBySearch();
+    _movies.addAll(newMovies);
 
     _isFetchingMore = false;
     notifyListeners();
+  }
+
+  Future<List<MovieEntity>> loadMoreBySearch() async {
+    paginated =
+        await repo.searchMovies(searchController.text, page: _currentPage);
+
+    return paginated?.results?.whereType<MovieEntity>().toList() ?? [];
   }
 
   void toggleFavState(MovieEntity movie) async {
@@ -104,17 +107,12 @@ class HomeProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    try {
-      if (query.isEmpty) {
-        clearSearch();
-        return;
-      }
-      final searchedMovies = await repo.searchMovies(query, page: _currentPage);
-      _movies =
-          searchedMovies?.results?.whereType<MovieEntity>().toList() ?? [];
-    } catch (e) {
-      //TODO
+    if (query.isEmpty) {
+      clearSearch();
+      return;
     }
+    paginated = await repo.searchMovies(query, page: _currentPage);
+    _movies = paginated?.results?.whereType<MovieEntity>().toList() ?? [];
 
     _isLoading = false;
     notifyListeners();
